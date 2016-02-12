@@ -1,0 +1,39 @@
+/* Reset */
+html, body, p {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+html {
+  font-family: Arial, sans-serif;
+  color: #222;
+  line-height: 1.5;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  padding: 5px 10px;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 30em) {
+  html {
+    font-size: 1.3em;
+  }
+}
