@@ -1,18 +1,12 @@
 "use strict";
 
+var grid;
+var lastFrameTime;
 var gamePaused = false;
 
 function main() {
-  var grid = new Grid(40);
-  // ⠠⠵
-  grid.setCellAt(2, 0, 1);
-  grid.setCellAt(3, 1, 1);
-  grid.setCellAt(1, 2, 1);
-  grid.setCellAt(2, 2, 1);
-  grid.setCellAt(3, 2, 1);
+  startLife(location.hash);
 
-  var lastFrameTime = new Date;
-  history.replaceState(null, null, '#|' + grid + '|');
   window.requestAnimationFrame(function frameHandler() {
     var now = new Date;
     if (!gamePaused && now - lastFrameTime >= 250) {
@@ -22,6 +16,27 @@ function main() {
     }
     window.requestAnimationFrame(frameHandler);
   });
+
+  window.onblur = function pauseGame() {
+    gamePaused = true;
+    window.history.replaceState(null, null, location.hash + ' (paused)')
+  };
+
+  window.onfocus = function unpauseGame() {
+    gamePaused = false;
+  };
+
+  window.onhashchange = function(e) {
+    startLife(e.newURL.split('#')[1]);
+  }
+}
+
+function startLife(hash) {
+  var hashMatch = decodeURIComponent(hash).match(/[⠀-⣿]+/);
+  var gridStr = hashMatch ? hashMatch[0] : '⠠⠵⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀';
+  grid = Grid.fromString(gridStr);
+  lastFrameTime = new Date;
+  history.replaceState(null, null, '#|' + grid + '|');
 }
 
 function Grid(width) {
@@ -31,7 +46,7 @@ function Grid(width) {
 }
 
 Grid.prototype.setCellAt = function(x, y, value) {
-  this.cells[y * this.width + x] = value;
+  this.cells[y * this.width + x] = !!value;
 };
 
 Grid.prototype.cellAt = function(x, y) {
@@ -69,13 +84,11 @@ Grid.prototype.neighbours = function (x, y) {
 
 Grid.prototype.toString = function() {
   var str = '';
-  var l = this.width / 2;
-  for (var i = 0; i < l; i++) {
+  for (var x = 0; x < this.width; x += 2) {
     // Unicode Braille patterns are 256 code points going from 0x2800 to 0x28FF.
     // They follow a binary pattern where the bits are, from least significant
     // to most: ⠁⠂⠄⠈⠐⠠⡀⢀
     // So, for example, 147 (10010011) corresponds to ⢓
-    var x = i * 2;
     var n = 0
       | this.cellAt(x, 0) << 0
       | this.cellAt(x, 1) << 1
@@ -88,6 +101,25 @@ Grid.prototype.toString = function() {
     str += String.fromCharCode(0x2800 + n);
   }
   return str;
+};
+
+Grid.fromString = function(str) {
+  var grid = new Grid(str.length * 2);
+
+  for (var i = 0; i < str.length; i++) {
+    var b = str.charCodeAt(i) - 0x2800;
+    var x = i * 2;
+    grid.setCellAt(x, 0, b & 1);
+    grid.setCellAt(x, 1, b & 2);
+    grid.setCellAt(x, 2, b & 4);
+    grid.setCellAt(x + 1, 0, b & 8);
+    grid.setCellAt(x + 1, 1, b & 16);
+    grid.setCellAt(x + 1, 2, b & 32);
+    grid.setCellAt(x, 3, b & 64);
+    grid.setCellAt(x + 1, 3, b & 128);
+  }
+
+  return grid;
 };
 
 function mod(a, b) {
