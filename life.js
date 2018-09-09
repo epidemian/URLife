@@ -1,13 +1,9 @@
 'use strict'
 
 let grid
+let rules
 let lastFrameTime
 let gamePaused = false
-
-const rules = {
-  birth: [3],
-  survival: [2, 3]
-}
 
 const main = () => {
   startLife()
@@ -21,20 +17,33 @@ const main = () => {
 const frameHandler = () => {
   const now = new Date()
   if (!gamePaused && now - lastFrameTime >= 100) {
-    console.log('' + grid)
     grid = grid.advanceTick()
-    window.history.replaceState(null, null, '#[' + grid + ']')
+    drawGame()
     lastFrameTime = now
   }
   window.requestAnimationFrame(frameHandler)
 }
 
 const startLife = () => {
-  const hashMatch = decodeURIComponent(window.location.hash).match(/[⠀-⣿|]+/)
-  const gridStr = hashMatch ? hashMatch[0] : '⠠⠵⠀⠀⠀⠀|⠀⠀⠀⠀⠀⠀|⠀⠀⠀⠀⠀⠀'
-  grid = Grid.fromString(gridStr)
+  const gameStr = decodeURIComponent(window.location.hash);
+  grid = parseGrid(gameStr) || parseGrid('⠠⠵⠀⠀⠀⠀|⠀⠀⠀⠀⠀⠀|⠀⠀⠀⠀⠀⠀')
+  rules = parseRules(gameStr) || parseRules('B3/S23')
   lastFrameTime = new Date()
-  window.history.replaceState(null, null, '#[' + grid + ']')
+  drawGame()
+}
+
+const parseGrid = gameStr => {
+  const match = gameStr.match(/[⠀-⣿|]+/)
+  return match && Grid.fromString(match[0])
+}
+
+const parseRules = gameStr => {
+  const splitNums = s => s.split('').map(n => parseInt(n, 10)).sort()
+  const match = gameStr.match(/B(\d+)\/S(\d+)/)
+  return match && {
+    birth: splitNums(match[1]),
+    survival: splitNums(match[2])
+  }
 }
 
 const unpauseGame = () => {
@@ -44,6 +53,14 @@ const unpauseGame = () => {
 const pauseGame = () => {
   gamePaused = true
   window.history.replaceState(null, null, window.location.hash + ' (paused)')
+}
+
+const drawGame = () => {
+  let rulesStr = `B${rules.birth.join('')}/S${rules.survival.join('')}`
+  const gameStr = `${rulesStr === 'B3/S23' ? '' : rulesStr}[${grid}]`
+
+  console.log(gameStr)
+  window.history.replaceState(null, null, `#${gameStr}`)
 }
 
 class Grid {
