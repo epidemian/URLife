@@ -25,7 +25,7 @@ const frameHandler = () => {
 }
 
 const startLife = () => {
-  const gameStr = decodeURIComponent(window.location.hash);
+  const gameStr = decodeURIComponent(window.location.hash)
   grid = parseGrid(gameStr) || parseGrid('⠠⠵⠀⠀⠀⠀|⠀⠀⠀⠀⠀⠀|⠀⠀⠀⠀⠀⠀')
   rules = parseRules(gameStr) || parseRules('B3/S23')
   lastFrameTime = new Date()
@@ -38,11 +38,15 @@ const parseGrid = gameStr => {
 }
 
 const parseRules = gameStr => {
-  const splitNums = s => s.split('').map(n => parseInt(n, 10)).sort()
   const match = gameStr.match(/B(\d+)\/S(\d+)/)
-  return match && {
-    birth: splitNums(match[1]),
-    survival: splitNums(match[2])
+  if (!match) return
+
+  // Note: in general Array#sort() sucks (e.g., try [1, 2, 10]), but here it's
+  // safe to use it because the numbers are single digit ;-)
+  const parseNumbers = s => s.split('').map(n => parseInt(n, 10)).sort()
+  return {
+    birth: parseNumbers(match[1]),
+    survival: parseNumbers(match[2])
   }
 }
 
@@ -64,21 +68,21 @@ const drawGame = () => {
 }
 
 class Grid {
-  constructor (width, height) {
+  constructor(width, height) {
     this.width = width
     this.height = height
     this.cells = new Uint8Array(width * height)
   }
 
-  cellAt (x, y) {
+  cellAt(x, y) {
     return this.cells[y * this.width + x]
   }
 
-  setCellAt (x, y, value) {
+  setCellAt(x, y, value) {
     this.cells[y * this.width + x] = !!value
   }
 
-  advanceTick () {
+  advanceTick() {
     const nextGrid = new Grid(this.width, this.height)
 
     for (let x = 0; x < this.width; x++) {
@@ -94,7 +98,7 @@ class Grid {
     return nextGrid
   }
 
-  neighbourCount (x, y) {
+  neighbourCount(x, y) {
     const x1 = mod(x - 1, this.width)
     const x2 = mod(x + 1, this.width)
     const y1 = mod(y - 1, this.height)
@@ -109,7 +113,7 @@ class Grid {
       this.cellAt(x2, y2)
   }
 
-  toString () {
+  toString() {
     const lines = []
     for (let y = 0; y < this.height; y += 4) {
       let line = ''
@@ -134,7 +138,7 @@ class Grid {
     return lines.join('|')
   }
 
-  static fromString (str) {
+  static fromString(str) {
     const lines = str.split('|')
     const width = Math.max(...lines.map(l => l.length)) * 2
     const height = lines.length * 4
